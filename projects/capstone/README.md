@@ -2,10 +2,13 @@
 ## Specializations
 ## Project: Capstone Proposal and Capstone Project
 
-**Note**
+Proposal: 
 
-The Capstone is a two-staged project. The first is the proposal component, where you can receive valuable feedback about your project idea, design, and proposed solution. This must be completed prior to your implementation and submitting for the capstone project. 
+- proposal.pdf (Generaded from *capstone_proposal.md)
+- data set
+  - (Training  ) data/aps_failure_training_set_processed_8bit.csv
+  - (Evaluation) data/aps_failure_test_set_processed_8bit.csv
 
-You can find the [capstone proposal rubric here](https://review.udacity.com/#!/rubrics/410/view), and the [capstone project rubric here](https://review.udacity.com/#!/rubrics/108/view). Please ensure that you are following directions correctly before submitting these two stages which encapsulate your capstone.
+Project: (TBD)
 
-Please email [machine-support@udacity.com](mailto:machine-support@udacity.com) if you have any questions.
+- capstone.ipynb
