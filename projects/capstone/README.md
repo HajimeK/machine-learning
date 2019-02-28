@@ -12,3 +12,37 @@ Proposal:
 Project: (TBD)
 
 - capstone.ipynb
+
+Libraries
+
+## Libraries Used (Imports)
+
+
+```python
+# Import libraries necessary for this project
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from IPython.display import display # Allows the use of display() for DataFrames
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics.scorer import make_scorer, accuracy_score, recall_score, roc_auc_score, r2_score
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import OneClassSVM
+
+
+import xgboost as xgb
+from xgboost import plot_tree
+from xgboost import plot_importance
+
+# Pretty display for notebooks
+%matplotlib inline
+
+random_seed = 42
+```
