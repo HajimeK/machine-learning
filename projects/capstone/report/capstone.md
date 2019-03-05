@@ -8,7 +8,7 @@ February 26st, 2019
 
 ## I. Definition
 
-Predict failure of heavy duty trucks out of sensors data
+In this project, we classify sensor data related to faulure in air pressure system or not.
 
 ### Domain Background
 
@@ -31,7 +31,7 @@ As a result control centor of the fleet management system of logistics company c
 
 ### Problem Statement
 
-In this project we take the sensor data from the track Air Pressure System, which is provided to Kaggle[^1] as an example.
+In this project we take the sensor data from the track Air Pressure System, which is provided to Kaggle[1] as an example.
 We are going to build a classification model that appropriately classifies whether the data acquired from the sensor is a sensor data combination that leads to an Air Pressure System error.
 Based on this classification, failure occurrence is predicted.
 In general, when monitoring the operation status of assets using sensors, in most cases, it is necessary to acquire data of a time period during which no problem occurs while in a normal operation.
@@ -49,14 +49,10 @@ In constructing the classification model, we adopt XGBoost and tackle the proble
 5. Evaluate with the model with given test set, with confusion matrix, and accuracy, precision, and f1 scores.
 6. Evaluate the contribution of feature, to discuss the possibility of reducing the sensors to predict failures.
 
-
-[^1] Air pressure system failures in Scania trucks : https://www.kaggle.com/uciml/aps-failure-at-scania-trucks-data-set/home
-
-
 ### XGBoost
 
 In this project, to detect the target Air pressure system with high accuracy,
-we apply a machine learning method known as XGBoost [^ 2].
+we apply a machine learning method known as XGBoost [2].
 XGBoost is one of machine learning ensemble methods known to give good results to various problems.
 XGBoost has a mechanism to accelerate learning called Gradient Boost,
 It is a method combining a mechanism that selects the best model called Randome Forest from multiple candidates.
@@ -66,15 +62,13 @@ The prediction accuracy of XGBoost improves more than Random Forests,
 On the other hand, there are multiple parameters that need tuning.
 In this project, a method called Grid Search is used for parameter adjustment.
 
-[^2] XGBoost : https://xgboost.readthedocs.io/en/latest/index.html
-
 ## II. Analysis
 
 ## Data Exploration
 
 ### Provided Data
 
-In this project, *the dataset consists of data collected from heavy Scania trucks in everyday usage. The system in focus is the Air Pressure system (APS) which generates pressurized air that is utilized in various functions in a truck, such as braking and gear changes.*[^1]
+In this project, *the dataset consists of data collected from heavy Scania trucks in everyday usage. The system in focus is the Air Pressure system (APS) which generates pressurized air that is utilized in various functions in a truck, such as braking and gear changes.*[1]
 
 The Air Pressure System is used to reduce load shocks and is an important system in logistics trucks.
 Training data for model construction and test data for verification are given in advance in the Kaggle dataset.
@@ -122,19 +116,6 @@ Thus, in the following, we build a classification model that properly classifies
 Following is the example data from the dataset.
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -285,7 +266,6 @@ Following is the example data from the dataset.
     </tr>
   </tbody>
 </table>
-<p>5 rows × 171 columns</p>
 </div>
 
 We will consider the necessary preprocessing of the featues values from sensors below.
@@ -313,19 +293,6 @@ When performing machine abnormality diagnosis, it is thought that it is necessar
 A part of each statistical data of the feature quantity in the training data set is displayed.
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -548,7 +515,6 @@ A part of each statistical data of the feature quantity in the training data set
     </tr>
   </tbody>
 </table>
-<p>8 rows × 171 columns</p>
 </div>
 
 Looking at the actual proportion of class 1 showing abnormality of Air Pressure System, there are 60,000 training data in total, 1,000 of which are target positive class (17%).
@@ -589,9 +555,7 @@ Scale conversion is not applied when building this model.
 dThe 75th percentile data is concentrated in the center.
 On the other hand, it can be seen that the remaining data spread widely.
 Consider excluding data far from the center of the cluster as Outlier under the assumption that it is data after PCA application and is clustered
-In this case, Outlier was judged by One Class SVM [^ 3].
-
-[^3] One Class SVM : https://scikit-learn.org/stable/modules/outlier_detection.html#outlier-detection
+In this case, Outlier was judged by One Class SVM [3].
 
 In converting to PCA, the feature amount was chosen with a contribution ratio of 98%. As a result, the feature quantity of 171 is reduced to 67. It can be seen that the feature quantities after reduction are uncorrelated and the cross correlation coefficient is almost 0.
 
@@ -651,6 +615,24 @@ The features picked up are different amond trees. These features are used in the
 
 Usually, a single tree is not strong enough to be used in practice. To overcome this, Random Forest uses a lot of decision trees which are slightly differentn with each other. When we get a new answer from those trees, we take the majority vote of among the trees to get a final result. Compared to employing a single tree, you can reduce the proportion of incorrect results. By default, a Random Forest will use the sqaure root of the number of features as the maximum features that it will look on any given branch. In our case we have total 171 features, so each decision will be the best of the 5(approximate) randomly selected features available.
 
+It is difficult to measure the quality of a given model without quantifying its performance over training and testing. This is typically done using some type of performance metric, whether it is through calculating some type of error, the goodness of fit, or some other useful measurement. For this project, you will be calculating the coefficient of determination, R2, to quantify your model's performance. The coefficient of determination for a model is a useful statistic in regression analysis, as it often describes how "good" that model is at making predictions.
+
+The values for R2 range from 0 to 1, which captures the percentage of squared correlation between the predicted and actual values of the target variable. A model with an R2 of 0 is no better than a model that always predicts the mean of the target variable, whereas a model with an R2 of 1 perfectly predicts the target variable. Any value between 0 and 1 indicates what percentage of the target variable, using this model, can be explained by the features. A model can be given a negative R2 as well, which indicates that the model is arbitrarily worse than one that always predicts the mean of the target variable.
+
+We apply the R2 score to evaluate the modeling performance based on the equation below.
+Tarald O. Kvalseth: "Cautionary Note about R2", The American Statistician Vol. 39, No. 4, Part 1 (Nov., 1985), pp. 279-285
+
+<img src="2019-03-05-15-01-01.png" alt="Service Profile" style="width: 400px;"/>
+
+Use R2 score to perform a performance calculation between y_true and y_predict.
+* R2 score of 0 means that the dependent variable cannot be predicted from the independent variable.
+* R2 score of 1 means the dependent variable can be predicted from the independent variable.
+* R2 score between 0 and 1 indicates the extent to which the dependent variable is predictable. An
+* R2 score of 0.40 means that 40 percent of the variance in Y is predictable from X.
+
+ROC-AUC and accuracy score are close to 1.0 for any models benchmarked.
+But R-squred, coefficient of determination is best 0.552 only for XGBoost.
+
 #### Random Forest Classifier
 
     Best ROC-AUC: 0.9885
@@ -664,13 +646,8 @@ Usually, a single tree is not strong enough to be used in practice. To overcome 
        micro avg       0.99      0.99      0.99     16000
        macro avg       0.98      0.70      0.78     16000
     weighted avg       0.99      0.99      0.98     16000
-    
-    [[15621     4]
-     [  223   152]]
-
 
 #### XGBClassifier
-
 
     Best ROC-AUC: 0.9944
     accuracy score : 0.98975
@@ -687,74 +664,7 @@ Usually, a single tree is not strong enough to be used in practice. To overcome 
     array([[15600,    25],
            [  139,   236]])
 
-#### XGBClassifier
-
-predictor = xgb.XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
-       colsample_bytree=0.8, gamma=0, learning_rate=0.1, max_delta_step=5,
-       max_depth=5, min_child_weight=1, missing=None, n_estimators=500,
-       n_jobs=1, nthread=4, objective='binary:logistic', random_state=0,
-       reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=42, silent=True,
-       subsample=0.5, tree_method='exact', verbose=10)
-
-    Best ROC-AUC: 1.0000
-    accuracy score : 0.9925625
-    R-squared, coefficient of determination : 0.675
-                  precision    recall  f1-score   support
-    
-               0       0.99      1.00      1.00     15625
-               1       0.92      0.75      0.83       375
-    
-       micro avg       0.99      0.99      0.99     16000
-       macro avg       0.96      0.87      0.91     16000
-    weighted avg       0.99      0.99      0.99     16000
-
-    array([[15600,    25],
-           [   94,   281]])
-
-<img src="output_56_0.png" alt="Service Profile" style="width: 300px;"/>
-
-<img src="output_57_0.png" alt="Service Profile" style="width: 600px;"/>
-
-#### PCAにより次元削減したデータセットに対するXGBoost
-
-
-    Best ROC-AUC: 0.9919
-    accuracy score : 0.9860625
-    R-squared, coefficient of determination : 0.391
-                  precision    recall  f1-score   support
-    
-               0       0.99      1.00      0.99     15625
-               1       0.87      0.48      0.62       375
-    
-       micro avg       0.99      0.99      0.99     16000
-       macro avg       0.93      0.74      0.81     16000
-    weighted avg       0.98      0.99      0.98     16000
-
-    array([[15597,    28],
-           [  195,   180]])
-
-
-%%time
-predictor = xgb.XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
-       colsample_bytree=0.8, gamma=0, learning_rate=0.1, max_delta_step=5,
-       max_depth=5, min_child_weight=1, missing=None, n_estimators=500,
-       n_jobs=1, nthread=4, objective='binary:logistic', random_state=0,
-       reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=42, silent=True,
-       subsample=0.5, tree_method='exact', verbose=10)
-
-predictor.fit(X_train, y_train)
-```
-
-
-```python
-score = predictor.predict_proba(X_train)
-print('Best ROC-AUC: {:.4f}'.format(roc_auc_score(y_train, score[:, 1], average='macro')))
-predict = predictor.predict(X_test)
-print("accuracy score : {}".format(accuracy_score( y_test_given, predict)))
-print("R-squared, coefficient of determination : {:.3f}".format(r2_score(y_test, predict)))
-print(classification_report( y_true = y_test, y_pred = predict ))
-confusion_matrix(y_true = y_test, y_pred = predict )
-```
+#### XGBoost for reduced features set by PCA transformation
 
     Best ROC-AUC: 1.0000
     accuracy score : 0.9889375
@@ -767,22 +677,11 @@ confusion_matrix(y_true = y_test, y_pred = predict )
        micro avg       0.99      0.99      0.99     16000
        macro avg       0.94      0.80      0.86     16000
     weighted avg       0.99      0.99      0.99     16000
-    
-
-
-
-
 
     array([[15598,    27],
            [  150,   225]])
 
-
-
-<img src="output_64_0.png" alt="Service Profile" style="width: 300px;"/>
-
-<img src="output_65_0.png" alt="Service Profile" style="width: 600px;"/>
-
-#### Log TransformによりSkeｗならびに裾野のデータを調整したXGBoost
+#### XGBoost after PCA and Log Transform
 
     Best ROC-AUC: 1.0000
     accuracy score : 0.9884375
@@ -799,45 +698,9 @@ confusion_matrix(y_true = y_test, y_pred = predict )
     array([[15598,    27],
            [  158,   217]])
 
-
-<img src="output_70_0.png" alt="Service Profile" style="width: 300px;"/>
-
-<img src="output_71_0.png" alt="Service Profile" style="width: 600px;"/>
-
-
-#### Evaluation
-
-Implementation: Define a Performance Metric
-
-It is difficult to measure the quality of a given model without quantifying its performance over training and testing. This is typically done using some type of performance metric, whether it is through calculating some type of error, the goodness of fit, or some other useful measurement. For this project, you will be calculating the coefficient of determination, R2, to quantify your model's performance. The coefficient of determination for a model is a useful statistic in regression analysis, as it often describes how "good" that model is at making predictions.
-
-The values for R2 range from 0 to 1, which captures the percentage of squared correlation between the predicted and actual values of the target variable. A model with an R2 of 0 is no better than a model that always predicts the mean of the target variable, whereas a model with an R2 of 1 perfectly predicts the target variable. Any value between 0 and 1 indicates what percentage of the target variable, using this model, can be explained by the features. A model can be given a negative R2 as well, which indicates that the model is arbitrarily worse than one that always predicts the mean of the target variable.
-
-For the performance_metric function in the code cell below, you will need to implement the following:
-
-    Use r2_score from sklearn.metrics to perform a performance calculation between y_true and y_predict.
-    Assign the performance score to the score variable.
-
-
-    R2 score of 0 means that the dependent variable cannot be predicted from the independent variable.
-    R2 score of 1 means the dependent variable can be predicted from the independent variable.
-    R2 score between 0 and 1 indicates the extent to which the dependent variable is predictable. An
-    R2 score of 0.40 means that 40 percent of the variance in Y is predictable from X.
-
-文献Tarald O. Kvalseth: "Cautionary Note about R2", The American Statistician Vol. 39, No. 4, Part 1 (Nov., 1985), pp. 279-285
-の（１）の定義を採用する。
-
-R-squared, coefficient of determination
-
-<img src="2019-03-05-15-01-01.png" alt="Service Profile" style="width: 400px;"/>
-
-ROC-AUC and accuracy score are close to 1.0 for any models benchmarked.
-But R-squred, coefficient of determination is best 0.675 only for XGBoost.
-
-XGBoost improved the predictio model against Rando Forest in this case.
+XGBoost improved the predictio model against Random Forest in this case.
 But R2 score of 0.40 means that 40 percent of the variance in Y is predictable from X.
 Which is lower than the regular maintenance measure.
-
 
 Although a better result is obtained than RainForest, it can be seen that the R2 score tends to be better without pre-processing the data.
 It is also predicted that the R2 score is further improved by adjusting the hyper parameter.
@@ -851,38 +714,10 @@ For these reasons, we will adjust the optimal hyperparameter with XGBoost withou
 
 It is understood that XGBoost which does not perform data preprocessing also shows high performance even if Precision, Recall etc. are seen.
 
-##### RandomForest
-              precision    recall  f1-score   support
-           0       0.99      1.00      0.99     15625
-           1       0.97      0.41      0.57       375
-
- 
-##### XGBoost 
-
-              precision    recall  f1-score   support
-           0       0.99      1.00      1.00     15625
-           1       0.92      0.75      0.83       375
-
-
-##### XGBoost  PCA
-
-              precision    recall  f1-score   support
-           0       0.99      1.00      0.99     15625
-           1       0.89      0.60      0.72       375
-
-
-##### XGBoost  Log Transform
-
-              precision    recall  f1-score   support
-           0       0.99      1.00      0.99     15625
-           1       0.89      0.58      0.70       375
-
-
 ## Seek hyperparameters
 
-https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.XGBClassifier
-
 With regard to training data and test data, preprocessing is not carried out based on the above, and given data is utilized.
+https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.XGBClassifier
 
 In determining the hyperparameter, this project conducted the following search.
 We adjusted several parameters beforehand and focused on * max_depth (int) *, * n_estimators (int) * which improved the effect.
@@ -916,16 +751,30 @@ We adjusted several parameters beforehand and focused on * max_depth (int) *, * 
     array([[15607,    18],
            [   98,   277]])
 
-
-    Best parameters: {'colsample_bytree': 0.8, 'gamma': 0.0, 'learning_rate': 0.1, 'max_delta_step': 5, 'max_depth': 6, 'min_child_weight': 1, 'n_estimators': 500, 'nthread': 4, 'objective': 'binary:logistic', 'scale_pos_weight': 1, 'seed': 42, 'subsample': 0.5, 'tree_method': 'exact', 'verbose': 10}
-    Best auroc score: 0.716
-
+| Parameter | Description | Search Rangge | Best Parameter|
+|-|-|-|-|
+| max_depth (int) | Maximum tree depth for base learners. | [5,6,7] | 6 |
+| learning_rate (float) | Boosting learning rate (xgb’s “eta”) | 0.1(Fixed) | 0.1|
+| n_estimators (int) | Number of boosted trees to fit.| [300, 500, 700] | 500 |
+| objective (string or callable) | Specify the learning task and the corresponding learning objective or a custom objective function to be used. | ['binary:logistic'] | 'binary:logistic'|
+| booster (string) | Specify which booster to use | gbtree | gbtree |
+| gamma (float) | Minimum loss reduction required to make a further partition on a leaf node of the tree. | [0.0] (Fixed) |0.0 |
+|min_child_weight (int) |  Minimum sum of instance weight(hessian) needed in a child. | [1]| 1|
+|max_delta_step (int) | Maximum delta step we allow each tree’s weight estimation to be.| [5] |5 |
+| subsample (float) | Subsample ratio of the training instance. | [0.5] (Fixed) |0.5|
+| colsample_bytree (float) | Subsample ratio of columns when constructing each tree. | [0.8] | 0.8|
 
 <img src="output_86_0.png" alt="Service Profile" style="width: 600px;"/>
 
 <img src="output_87_0.png" alt="Service Profile" style="width: 600px;"/>
 
+By seeing the decision tree, we can tell the importance of sensor by traversing the tree nodes from root to leaves.
+
+By adjuesting searching the parameter, we can achieve the model improved classification capability.
+Especially improved the recall.
+
 <img src="output_88_1.png" alt="Service Profile" style="width: 600px;"/>
+![](2019-03-05-16-37-01.png)
 
 ## V. Conclusion
 
@@ -954,3 +803,9 @@ There is a possibility that the ratio of the class to be detected was adjusted b
 In ordinary sensor data, overwhelmingly large amounts of data at normal times are generated.
 Therefore, it is considered necessary to verify whether the approach of this time is effective even for data before adjustment, which has less data at abnormal time, in general purpose for practical use.
 In addition, XGBoost is a time-consuming approach to adjusting hyperparameters, so it can be expected to improve speed by strengthening computing resources such as utilization of GPUs.
+
+
+## Reference
+[1] Air pressure system failures in Scania trucks : https://www.kaggle.com/uciml/aps-failure-at-scania-trucks-data-set/home
+[2] XGBoost : https://xgboost.readthedocs.io/en/latest/index.html
+[3] One Class SVM : https://scikit-learn.org/stable/modules/outlier_detection.html#outlier-detection
