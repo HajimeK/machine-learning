@@ -6,122 +6,120 @@
 Hajime Kawata  
 February 26st, 2019
 
+## I. Definition
+
 Predict failure of heavy duty trucks out of sensors data
 
 ### Domain Background
 
-Reducing the failure rate of trucks in logictics is an important issue for improving profitability and customer satisfaction in logistics business.
+Reducing the failure rate of trucks is critical in logictics business.
+That directly impacts profitability and customer satisfaction.
 Until now, logistics companies rely on regular maintenance to prevent the occurrence of failures.
 However, since the utilization rate of trucks exceeds the days what has been assumed to be covered by periodic maintenance, the percentage of post-maintenance caused by failures increasing, which has been a problem for some time.
 
-For this reason, it is strongly required that inspection and maintenance work be performed before regular failure, by appropriately detecting signs of failure during regular maintenance
-In order to properly capture signs of failure, it has been considered to use data collected from sensors installed in trucks, bu sensor data is gathered in milliseconds at longest, and collection targets are also diverse.
-As a result, several hundred megabytes of data may be generated from one track on a day.
+For this reason, it is strongly required to detect potential failures in time before the actual failures.
+In order to properly capture signs of failure, it has been considered to use data collected from sensors installed in trucks, bu sensor data is gathered in the order of milliseconds, and collection targets are also diverse.
+As a result, several hundred megabytes of data may be generated from one track in a day.
 A large data cost has been anticipated.
 
-In this project in order to quickly and flexibly arrange trucks based on failure prediction,
-- Reduce the amount of features derived from the target sensor to be collected and suppress the arithmetic cost to be generated
-- Perform a failure based on the logic derived from the data pattern leading to the failure on the truck side.
+In this project in order to quickly and flexibly arrange trucks based on failure prediction.
+- Find sensors to detect failures.
+- Perform a failure prediction based on the logic derived from the sensor data
 
-This would make it possible to appropriately send alerts before the actual failure occurrence to the monitoring center and to adjust the arrangement of the trucks.
-
+This would make it possible to alerts before the actual failure occurrence.
+As a result control centor of the fleet management system of logistics company can properly improve trucks utilization.
 
 ### Problem Statement
 
-Here, using the training data, we derive the prediction model of the occurrence of the failure (label) from the sensor data (features). This prediction logic is applied to the test data and the ability of the prediction logic is evaluated.
-The sensor data is anonymized for confidentiality reasons, and so we have to make the prediction model purely on mathematical and statistical approach.
+In this project we take the sensor data from the track Air Pressure System, which is provided to Kaggle[^1] as an example.
+We are going to build a classification model that appropriately classifies whether the data acquired from the sensor is a sensor data combination that leads to an Air Pressure System error.
+Based on this classification, failure occurrence is predicted.
+In general, when monitoring the operation status of assets using sensors, in most cases, it is necessary to acquire data of a time period during which no problem occurs while in a normal operation.
+Therefore, when constructing a model that detects an abnormal condition, it is necessary to confirm that the error state is appropriately included in the target data set.
 
-### Solution Statement
+In model construction, in order to improve classification accuracy, it is common to consider pre-processing of data according to the characteristics of the data set.
+In this project, we first analyze the characteristics of the data set of the target model.
+In addition, we will consider, implement and evaluate the application of the optimal model.
+In constructing the classification model, we adopt XGBoost and tackle the problem with the following approaches.
 
-#### Project Design
+1. Load data to obtain training data set and test data set.
+2. Analyze data to understanda dataset and design necessary preprocessing of data for model construction.
+3. Apply some predicting model classifiers to benchmark the good classifiers in this use case.
+4. Tune the XGBoost predicting model classifiers predictor to improve the classification capability of the model.
+5. Evaluate with the model with given test set, with confusion matrix, and accuracy, precision, and f1 scores.
+6. Evaluate the contribution of feature, to discuss the possibility of reducing the sensors to predict failures.
 
-1. Split the training data set to establish model and evaluate
-1. Apply PCA to reduce the dimension of the model.
-1. Device predictor with XGBoost classifier, while seeking the best hyperparameter values with Grid Search by ROC-AUC.
-1. Evaluate with the model with given test set, with confusion matrix, and accuracy, precision, and f1 scores.
-1. Using the given test set to evaluate the model
-1. Evaluate the contribution of feature, to discuss the possibility of reducing the sensors to predict failures.
 
-#### XGBoost
+[^1] Air pressure system failures in Scania trucks : https://www.kaggle.com/uciml/aps-failure-at-scania-trucks-data-set/home
 
-本プロジェクトでは、対象となるAir pressure systemを高い精度で検出するための機械学習の手法として、
-XGBoost ( https://xgboost.readthedocs.io/en/latest/index.html )
-によるアプローチを取る。
-多様な問題に対し、良い結果を出すことが知られている。
-Boosted treesは，アンサンブル学習と呼ばれる手法の一つで、Gradient Boostと呼ばれる学習を加速する手法と、
-Randome Forestと呼ばれるベストなモデルを構築する方法とを組み合わせた手法です。
-Randoem Forestで発生するOver Fittingを予防するRegularization Modelが組み込まえれている。
 
-Boosted treesの予測精度はRandom Forestsよりも向上しますが，チューニングが必要なパラメータが複数存在する。
-ここではこのパラメータの調整に、Grid Searchと呼ばれる手法を用いる。
-汎化能力を上げるために，学習率(XGBoostパッケージではパラメータeta)を下げていき，その都度最適化を行う
+### XGBoost
 
-複数のパラメータ調整によるチューニングが必要であり，最適化はグリッドサーチやCross Validationを複数行う
+In this project, to detect the target Air pressure system with high accuracy,
+we apply a machine learning method known as XGBoost [^ 2].
+XGBoost is one of machine learning ensemble methods known to give good results to various problems.
+XGBoost has a mechanism to accelerate learning called Gradient Boost,
+It is a method combining a mechanism that selects the best model called Randome Forest from multiple candidates.
+A mechanism is incorporated to prevent problems such as excessive learning occurring in Randoem Forest, which is too compatible with the data at the time of construction of the model, resulting in inappropriate classification of new data.
 
-It
-is computationally demanding to enumerate all the possible
-splits for continuous features.  In order to do so efficiently,
-the algorithm must first sort the data according to feature
-values and visit the data in sorted order to accumulate the
-gradient statistics for the structure score i
+The prediction accuracy of XGBoost improves more than Random Forests,
+On the other hand, there are multiple parameters that need tuning.
+In this project, a method called Grid Search is used for parameter adjustment.
 
- データの特徴について分析し、モデル構築の際のデータ前処理の要否、前処理の内容について検討する。
+[^2] XGBoost : https://xgboost.readthedocs.io/en/latest/index.html
 
-For the criteria listed in **Domain Background***,
-take the following solution approach in this project
-
-- Reduce sensor data features from 171 by PCA (Primary Components Analysis)
-- Construct the model from reduced features with XGBoost classifier, by adjusting hyperparameters with Grid Search CV 
-
+## II. Analysis
 
 ## Data Exploration
 
-In this section, you will begin exploring the data through visualizations and code to understand how each feature is related to the others. You will observe a statistical description of the dataset, consider the relevance of each feature, and select a few sample data points from the dataset which you will track through the course of this project.
+### Provided Data
 
-このデータ・セットにおいて訓練データとテストデータは所与のものとして指定されているので、これらを用いる。
-センサーデータは8bit単位でセンサーから取得される（参照　I2CやSPIなどの電子回路では１byte(=8bit)データとして取得できる）。これについては、実際の物理的な計測値に変換された下記データを用いるものとする。
-    train = pd.read_csv('data/aps_failure_training_set_processed_8bit.csv')
-    test = pd.read_csv('data/aps_failure_test_set_processed_8bit.csv')
+In this project, *the dataset consists of data collected from heavy Scania trucks in everyday usage. The system in focus is the Air Pressure system (APS) which generates pressurized air that is utilized in various functions in a truck, such as braking and gear changes.*[^1]
+
+The Air Pressure System is used to reduce load shocks and is an important system in logistics trucks.
+Training data for model construction and test data for verification are given in advance in the Kaggle dataset.
+Using the training data, we derive the prediction model of the occurrence of the failure (label) from the sensor data (features).
+This prediction logic is applied to the test data and the ability of the prediction logic is evaluated.
+The sensor data is anonymized for confidentiality reasons, and so we have to make the prediction model purely on mathematical and statistical approach.
+
+Below, combinations of data sets and files given as training data and test data are shown.
+
+| dataset| file |
+|-|-|
+| Training Data to build a model | data/aps_failure_training_set_processed_8bit.csv |
+| Test Data to evaluate the build model | data/aps_failure_test_set_processed_8bit.csv |
+
 
 ### Datasets and Inputs
 
-Data is provided in :
-*Kaggle* : https://www.kaggle.com/uciml/aps-failure-at-scania-trucks-data-set/home
-
-*The dataset consists of data collected from heavy Scania trucks in everyday usage. The system in focus is the Air Pressure system (APS) which generates pressurized air that is utilized in various functions in a truck, such as braking and gear changes.* (*Kaggle*)
-
-このデータ・セットでは以下の２つのクラスに分類されたデータが与えられている。
+In this data set, in order to discriminate whether it is failure data of Air Pressure System or other data,
+data is classified into the following two classes.
 
 | Category | Description |
 |----------|-------------|
 | positive class | *consists of component failures for a specific component of the APS system.* |
 | negative class | *consists of trucks with failures for components not related to the APS.*  | 
 
-
-Following is the data volume information.
+Following is the data volume information for each classes.
 
 | _ | Total | Positive | Negative | features |
 |-|-|-|-|-|
 | Train | 60000 | 1000 | 59000 | 171 |
 | Test  | 16000 |  -    | -     | 171 |
 
-Positive Classになるデータ・セットを適切に分類することが求められる。
-以下で、対象となる２つのクラスは以下の値で識別されていることから、
-positive class 0.992188 	
-negative class -0.992188
-positive classを1, negative classを0で新たにラベル付し直す。
+In the classifier introduced in this project, it is required to appropriately classify the data set that becomes a positive class.
+In the following, in order to make it easy to identify the two target classes by the machine learning model,
+0.992188 for positive class and -0.992188 for negative class,
+We re-labeled positive class as 1 and negative class as 0 with integer values.
 
-そのため、このプロジェクトではポジティブクラスになるデータセット、つまりクラスが1となるデータ・セットを適切に分類する、予測モデルを構築する。
+Thus, in the following, we build a classification model that properly classifies the data set whose class is 1.
+In the classifier introduced in this project, it is required to appropriately classify the data set that are classified to the positive class.
+In the following, in order to make it easy to identify the two target classes by the machine learning model,
+0.992188 for positive class and -0.992188 for negative class, we re-labeled positive class as 1 and negative class as 0 with integer values.
 
+Thus, in the following, we build a classification model that properly classifies the data set whose class is 1.
 
-    train = pd.read_csv('data/aps_failure_training_set_processed_8bit.csv')
-    test = pd.read_csv('data/aps_failure_test_set_processed_8bit.csv')
-display(train.shape)
-    (60000, 171)
-display(test.shape)
-    (16000, 171)
-
-trainデータ・セットの例
+Following is the example data from the dataset.
 
 <div>
 <style scoped>
@@ -290,31 +288,29 @@ trainデータ・セットの例
 <p>5 rows × 171 columns</p>
 </div>
 
-データに対し必要な特徴量の前処理について検討する。特徴量ごとの値のスケールが異なる場合、計算機による計算誤差が、予測に影響を及ぼす恐れがある。また、極端な偏りがある場合、予測精度に影響を及ぼす場合がある。
-予測モデルを構築するにあたり、所与のトレーニングデータの特徴を把握したうえで必要な前処理を行い、これらの影響を極力排除するのが慣例である。
+We will consider the necessary preprocessing of the featues values from sensors below.
+If the scales of the values for each feature are different, for example, the calculation error by the computer may affect the prediction preciseness and accuracy. Also, if there is extreme bias of the values, it may affect prediction accuracy.
+In constructing the prediction model, it is customary to grasp the characteristics of a given training data, perform necessary pretreatment, and eliminate these influences as much as possible.
 
-### データの広がりとスケールの調整の要否
+### Necessity discussion on data scaling
 
-まず、データの偏りを見るにあたり、171個の各特徴量をボックス図にプロットした。
-全てのデータが−１から1の範囲に収まっている。
-75パーセンタイルについては、その幅は特徴量ごとにまちまちである。-1から1までの範囲に広がっているもの、0.01のオーダーに収まっているものなどがある。
+First of all, in seeing the bias of data, 171 feature quantities were plotted in the box diagram.
+All data are within the range of -1 to 1.
+For the 75th percentile, its width varies for each feature.
+Although the overall data has been preconditioned to fit within the range of -1 to 1, the data of the 75 th percentile is within the order of 0.01.
+Also, it can be seen that data that does not fit in the 75th percentile (black point in the figure) called Outlier has spread in each feature amount.
 
-また、Outlierと呼ばれる75パーセンタイルに収まらないデータ（図中の黒い点）が、各特徴量において広がりを持っていることが見られる。
+In the following, we analyze the above-mentioned bias of distribution and features on Outlier and verify whether or not to process, and what kind of processing should be done if it should be processed.
 
-以下では、上記の分布の偏りや、Outlierについて特徴を分析し、処理すべきか否か、処理すべきであるならばどのような処理を行うべきか検証する。
+<img src="output_14_0.png" alt="Service Profile" style="width: 800px;"/>
 
+Specifically, when looking at the percentile value of some data, it can be seen that there are more sensor data values with the same value at each of the 25th, 50th and 75th percentiles.
+It is understood that the concentration is concentrated to some values extremely.
 
+This is a situation that is sufficient if it is assumed that the target is a sensor, and most of them measure steady state other than the failure state.
+When performing machine abnormality diagnosis, it is thought that it is necessary to construct a model that derives less abnormal data from overwhelming majority of normal data.
 
-![png](output_14_0.png)
-
-
-具体的に、一部のデータのパーセンタイル値をみると、２５，５０，７５の各パーセンタイルで同じ値を持つセンサーデータ値が多い傾向にあることが見て取れる。
-極端に一部の値に集中していることがわかる。
-
-これは、対象がセンサーによるものであることから、多くは故障状態以外の定常状態を計測しているとすれば、十分ありうる状況である。
-機械の異常診断を行う際には、圧倒的多数の正常データから、少ない異常データを導くモデルを構築する必要があると考えられる。
-
-訓練データセット中の特徴量の各統計データの一部を表示する。
+A part of each statistical data of the feature quantity in the training data set is displayed.
 
 <div>
 <style scoped>
@@ -555,158 +551,90 @@ trainデータ・セットの例
 <p>8 rows × 171 columns</p>
 </div>
 
-APSの異常を示すクラス1の実際の割合を見ると、訓練データは全部で60,000件あり、そのうちの1,000件（17%)である。
-これは、171の多くのセンサーは、APSの異常発生時においても、定常状態と同じ値を異常時も示している可能性がある。
-１７１の特徴量の中から、異常状態を判別するための組み合わせを人出で行うのは、非現実的であり、科学的なアプローチを通じて自動的に行う方法を提案する必要がある。
+Looking at the actual proportion of class 1 showing abnormality of Air Pressure System, there are 60,000 training data in total, 1,000 of which are target positive class (17%).
+This suggests that majority of the 171 sensors may indicate the same value as the steady state even in abnormal cases even when APS abnormality occurs.
+It is unrealistic to perform a combination for discriminating abnormal conditions from among human's characteristics, and it is necessary to propose a method to automatically perform through a scientific approach.
 
-y.value_counts()
+| Class | Training Dataset | Test Dataset |
+|-|-|-|
+|Negative Class | 59,000 | 15,625 |
+|Positive Class | 1,000 | 375 |
+|Percentage of Positive Class | 1.7% | 2.3% |
 
-    0    59000
-    1     1000
+In considering the preprocessing, next, we investigate the correlation between the feature quantities of the data adopted this time.
 
-約1.7％のデータがAPS関連の故障データである。
+The correlation coefficient between sensor data is shown as a heat map.
+This heat map is displayed with red closer to white as the positive correlation is stronger, and blue closer to white as negatively strong.
+Regarding the relationship between the strength of the correlation and the color of the heat map, the scale on the right bar of the figure is shown.
+Combinations of feature quantities which are close to white in the heat map are totally seen.
+From this, it can be seen that there are many combinations of feature quantities with strong positive correlation.
 
-テストデータについては
-    0    15625
-    1      375
+As for the target data, since the name of the feature quantity is anonymized, it is unknown what the measurement object and method of the specific sensor are.
+Therefore, the measurement target between sensors is unknown here.
+In general, there are cases where a plurality of sensors are installed for the same device to verify the difference in sensor information depending on the mounting position and the like.
+Inferring from such a fact, it is conceivable that data of events occurring in the same equipment will be acquired and strong correlation will be seen.
 
-約2.3％のデータがAPS関連の故障データである。
-    0.0234375
+By integrating feature values ​​with strong correlation and newly setting features with high independence, we will reduce the calculation cost when building the model and improve the prediction accuracy.
 
-前処理を検討するにあたり、次に、今回採用したデータの特徴量間の相関について調査する。
+<img src="output_24_1.png" alt="Service Profile" style="width: 800px;"/>
 
-センサーデータ間の相関係数をヒートマップとして図示した。
-このヒートマップは正の相関が強いほど白に近い赤、弱いほど白に近い青で表示される。
-相関の強さとヒートマップの色との関係については、図の左の棒に尺度が示されている。
-ヒートマップ中に白に近い赤となっている特徴量の組み合わせが全体的に見られる。
-このことから、強い正の相関を持つ特徴量の組み合わせが多く存在することがわかる。
+When the distribution of values is extremely different between feature quantities, accuracy may be affected by influence of computer rounding.
+Therefore, due to scale conversion, the influence due to the width of distribution may be avoided.
+The target data of this report was originally scaled in the range of -1 to 1 as shown in the box diagram above.
+Therefore, as you can see in the box diagram below after the scale return, the state of the distribution did not change, and it was judged that the effect of scale conversion on this data is small.
+Scale conversion is not applied when building this model.
 
-対象データについては、特徴量の名称が匿名化されているので、具体的なセンサーの測定対象や方法については不明ではある。
-そのため、センサー間の測定対象については、ここでは不明だ。
-一般に、センサーを同じ機器に対して複数設置して取り付け位置によるセンサー情報の違いなどを検証する場合もある。
-こうしたことから推論すると、同じような機器に発生したイベントのデータを取得することになり、相関が強く見られていることなどが考えられる。
+<img src="output_27_0.png" alt="Service Profile" style="width: 800px;"/>
 
-本件は171と特徴量が比較的多いことから、相関の強い特徴量についてまとめて独立性の高い特徴量を新たに設定することで、モデル構築の際の計算コストを削減と、予測精度の向上を図る。
+dThe 75th percentile data is concentrated in the center.
+On the other hand, it can be seen that the remaining data spread widely.
+Consider excluding data far from the center of the cluster as Outlier under the assumption that it is data after PCA application and is clustered
+In this case, Outlier was judged by One Class SVM [^ 3].
 
-![png](output_24_1.png)
+[^3] One Class SVM : https://scikit-learn.org/stable/modules/outlier_detection.html#outlier-detection
 
+In converting to PCA, the feature amount was chosen with a contribution ratio of 98%. As a result, the feature quantity of 171 is reduced to 67. It can be seen that the feature quantities after reduction are uncorrelated and the cross correlation coefficient is almost 0.
 
-特徴量間で値の分布が極端に異なる場合に、計算機乗の丸めの影響により精度が影響を受ける場合がある。
-そのため、スケール変換により、分布の幅による影響を回避することがある。
-本レポートの対象データについては、上述のボックス図に見る通りもともと−1から1の範囲にスケール調整されていた。
-そのため、スケール返還後も下記のボックス図に見る通り、分布の様子は変わらず、今回のデータについてはスケール変換の効果は少ないと判断した。
-今回のモデル構築にあたってはスケール変換は行わない。
+For the feature amount after PCA conversion, drawing a box diagram shows that many data are aggregated around 0 and that the skirt of data not included in the 75 th percentile is long.
+For a given training data, there are many uniform data, and it can be seen that the data deviating therefrom has diversity.
 
+<img src="output_30_0.png" alt="Service Profile" style="width: 800px;"/>
 
-![png](output_27_0.png)
+<img src="output_31_0.png" alt="Service Profile" style="width: 800px;"/>
 
+<img src="output_32_1.png" alt="Service Profile" style="width: 800px;"/>
 
-75パーセンタイルのデータは中央に集中しているものの、残りのデータについては幅広く広がっていることがわかる。 PCA適用後のデータであり、クラスタ化されているという前提のもと、クラスタの中心から遠いデータをOutlierとして除外する。
-ここではOne Class SVMにより、Outlierの判定を行った。 https://scikit-learn.org/stable/modules/outlier_detection.html#outlier-detection
+By using PCA (Primary Component Classifier) ​​we were able to reduce 171 feature quantities and convert them to 67 feature values ​​with low correlation with each other.
+Here, although it can be expected that the calculation cost and accuracy at the time of model construction can be improved, it is verified whether classification is performed properly.
+The objective of this project is to increase the accuracy of the model that classifies the positive class (consists of component failures for a specific component of the APS system).
+We confirmed how these data are classified after conversion by PCA.
 
-PCA変換するにあたり、98％の寄与率で特徴量を選んだ。この結果171の特徴量を67まで削減している。削減後の特徴量は互いに無相関となり、相互相関係数はほぼ0となっていることが見て取れる。
-
-PCA変換後の特徴量に対し、ボックス図を描くと0付近に多くのデータが集約し、75パーセンタイルに含まれないデータの裾野が長いことが見て取れる。
-所与のトレーニングデータは均一なデータが多く、そこから外れるデータに多様性があることがわかる。
-
-
-    (60000, 67)
-
-
-
-![png](output_30_0.png)
-
-
-
-![png](output_31_0.png)
-
-
-
-![png](output_32_1.png)
-
-
-PCA(Primary Component Classifier)により171個の特徴量を削減し、互いに相関の低い67個の特徴量に変換することができたが、モデル構築時の計算コストや、精度の向上が期待できるものの、分類が適切に行えているか検証する。
-ポジティブクラス( consists of component failures for a specific component of the APS system)を分類するモデルの精度を高めることが本プロジェクトの目的である。
-これらのデータがPCAによる変換後にどのように分類されているか確認した。
-
-One Class SVMによって50％を区切りにPositive ClassとNegative Classの割合をそれぞれ求めた
-60000件のデータを2つに分けると、One Class SVMによって除外されるOutに分類されたデータにほとんどのPositiveクラスが分類されている。
-One Class SVMによる分類では、検出対象のPositiveクラスがほとんど除外されてしまうことがわかる。
+One class SVM determined the percentage of Positive Class and Negative Class separating 50%.
+When dividing 60000 data into two, most Positive classes are classified into data classified as Out excluded by One Class SVM.
+In classification by One Class SVM, the Positive class to be detected was almost excluded.
 
 |-| Positive | Negative |
 |-|-|-|
 |Out | 991 | 29009 |
 |In | 9 | 2991 |
 
-センサーデータについては、ほとんどのデータは正常状態のデータである。
-今回のNegativeクラスのデータについては、何らかの車載コンポーネントに異常時に取得したデータではあるものの、対象となるAPSの異常が発生していない状況で取得されたデータだ。
-そのため、正常状態に偏ったデータが取得されていると考えられる。
+For sensor data, most of the data is in normal state.
+As for the data of this Negative class, it is data which was acquired at the time of abnormality to some kind of in-vehicle component.
+In other words, it is data acquired in the situation where the abnormality of the target APS does not occur.
+Therefore, from the viewpoint of APS, it is considered that data biased to the normal state is acquired.
 
+<img src="output_34_0.png" alt="Service Profile" style="width: 800px;"/>
 
-![png](output_34_0.png)
+<img src="output_36_0.png" alt="Service Profile" style="width: 800px;"/>
 
+So we will not discard the data as outliers, as it includes important data for classification.
 
-![png](output_36_0.png)
-
-
-
-    0    29991
-    1        9
-    Name: class, dtype: int64
-
-
-
-Positiveデータがほとんど除外されてしまったことがわかる
-
-
-
-![png](output_39_0.png)
-
-
-    0    29009
-    1      991
-    Name: class, dtype: int64
-
-
-
-outlierは棄却せず、裾のの広がりを緩和するために、対数変換してみる
-
-
-```python
-X_reduced_test_data = pca.transform(X_test_given)
-
-MIN = min(np.min(X_reduced_data), np.min(X_reduced_test_data)) - 0.1
-MIN
-```
-
-
-
-
-    -4.226051165194996
-
-
-
-
-```python
-X_reduced_test_data_log = np.log(X_reduced_test_data - MIN)
-
-fig, ax = plt.subplots(1, 1, figsize=(20, 10))
-pd.DataFrame(X_reduced_test_data_log).boxplot(ax=ax)
-plt.show()
-```
-
-上記のことから、Outlierに重要なデータが含まれていると考え、Outlierの棄却は行わない。
-
-
-![png](output_43_0.png)
-
+<img src="output_43_0.png" alt="Service Profile" style="width: 800px;"/>
 
 ### Evaluation Metrics
 
 In evaluating the prediction logic, it is a challenge to extract failure events as much as possible while maintaining the operation rate. For that reason, it is necessary to accurately derive the judgment of correctness. Here, to make the balance of Confusion Matrix, adopt a model with a high result of scoring by ROC-AUC.
-
-
-Accuracy, Precision, Recallのそれぞれを評価する。
+We also use accuracy, precision, and recall score for flassifier capability comparison.
 
 ### Benchmark Model
 
@@ -714,33 +642,14 @@ As benchmark, adopts 60% correct answer rate.
 This is based on a hearing from an interview myself conducted that the failure rate prevented by regular maintenance is about 60% by experience.
 It is worth considering the devided model in this project, if failure prediction is more than 60% Accuracy.
 
-ただ、モデルの精度は極力高められることが望ましい。
-採用するべきデータ前処理ならびにXGBoostモデルのハイパーパラメータのベンチマークとして、RandomForestモデルと比較して評価する。
+However, it is desirable that the accuracy of the model be increased as much as possible.
+It is evaluated as data preprocessing to be adopted and benchmark of hyper parameter of XGBoost model compared with Random Forest model.
 
-Random Forest uses a set of decision trees, and each tree represents some decision path to 'income' class, from features. Subset of features like 'capital-gain', 'education-num', 'age' and etc are used in each tree. The features picked up are different amond trees. These features are used in the list of questions as a branch in the tree to reach from the ground to leaves(=income).
+Random Forest uses a set of decision trees, and each tree represents some decision path to the positive class, from features.
+Subset of features are used in each tree.
+The features picked up are different amond trees. These features are used in the list of questions as a branch in the tree to reach from the ground to leaves(=income).
 
-Usually, a single tree is not strong enough to be used in practice. To overcome this, Random Forest uses a lot of decision trees which are slightly differentn with each other. When we get a new answer from those trees, we take the majority vote of among the trees to get a final result. Compared to employing a single tree, you can reduce the proportion of incorrect results. By default, a Random Forest will use the sqaure root of the number of features as the maximum features that it will look on any given branch. In our case we have total 103 features, so each decision will be the best of the 10(approximate) randomly selected features available.
-
-
-    Best ROC-AUC: 0.9890
-    accuracy score : 0.9896875
-    R-squared, coefficient of determination : 0.549
-                  precision    recall  f1-score   support
-    
-               0       0.99      1.00      0.99     15625
-               1       0.85      0.68      0.76       375
-    
-       micro avg       0.99      0.99      0.99     16000
-       macro avg       0.92      0.84      0.88     16000
-    weighted avg       0.99      0.99      0.99     16000
-    
-    [[15579    46]
-     [  119   256]]
-
-
-    /opt/anaconda3/lib/python3.6/site-packages/sklearn/linear_model/logistic.py:758: ConvergenceWarning: lbfgs failed to converge. Increase the number of iterations.
-      "of iterations.", ConvergenceWarning)
-
+Usually, a single tree is not strong enough to be used in practice. To overcome this, Random Forest uses a lot of decision trees which are slightly differentn with each other. When we get a new answer from those trees, we take the majority vote of among the trees to get a final result. Compared to employing a single tree, you can reduce the proportion of incorrect results. By default, a Random Forest will use the sqaure root of the number of features as the maximum features that it will look on any given branch. In our case we have total 171 features, so each decision will be the best of the 5(approximate) randomly selected features available.
 
 #### Random Forest Classifier
 
@@ -778,10 +687,14 @@ Usually, a single tree is not strong enough to be used in practice. To overcome 
     array([[15600,    25],
            [  139,   236]])
 
-
-
 #### XGBClassifier
 
+predictor = xgb.XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+       colsample_bytree=0.8, gamma=0, learning_rate=0.1, max_delta_step=5,
+       max_depth=5, min_child_weight=1, missing=None, n_estimators=500,
+       n_jobs=1, nthread=4, objective='binary:logistic', random_state=0,
+       reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=42, silent=True,
+       subsample=0.5, tree_method='exact', verbose=10)
 
     Best ROC-AUC: 1.0000
     accuracy score : 0.9925625
@@ -798,14 +711,9 @@ Usually, a single tree is not strong enough to be used in practice. To overcome 
     array([[15600,    25],
            [   94,   281]])
 
+<img src="output_56_0.png" alt="Service Profile" style="width: 300px;"/>
 
-
-![png](output_56_0.png)
-
-
-
-![png](output_57_0.png)
-
+<img src="output_57_0.png" alt="Service Profile" style="width: 600px;"/>
 
 #### PCAにより次元削減したデータセットに対するXGBoost
 
@@ -821,19 +729,11 @@ Usually, a single tree is not strong enough to be used in practice. To overcome 
        micro avg       0.99      0.99      0.99     16000
        macro avg       0.93      0.74      0.81     16000
     weighted avg       0.98      0.99      0.98     16000
-    
-
-
-
-
 
     array([[15597,    28],
            [  195,   180]])
 
 
-
-
-```python
 %%time
 predictor = xgb.XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
        colsample_bytree=0.8, gamma=0, learning_rate=0.1, max_delta_step=5,
@@ -844,10 +744,6 @@ predictor = xgb.XGBClassifier(base_score=0.5, booster='gbtree', colsample_byleve
 
 predictor.fit(X_train, y_train)
 ```
-
-    CPU times: user 5min 42s, sys: 547 ms, total: 5min 43s
-    Wall time: 1min 41s
-
 
 
 ```python
@@ -882,32 +778,11 @@ confusion_matrix(y_true = y_test, y_pred = predict )
 
 
 
+<img src="output_64_0.png" alt="Service Profile" style="width: 300px;"/>
 
-```python
-fig, ax = plt.subplots(1, 1, figsize=(7, 25))
-plot_importance(predictor, max_num_features = pca.n_components_, ax=ax)
-plt.show()
-```
-
-
-![png](output_64_0.png)
-
-
-
-```python
-plot_tree(predictor, rankdir='LR')
-fig = plt.gcf()
-fig.set_size_inches(150, 100)
-plt.show()
-```
-
-
-![png](output_65_0.png)
-
+<img src="output_65_0.png" alt="Service Profile" style="width: 600px;"/>
 
 #### Log TransformによりSkeｗならびに裾野のデータを調整したXGBoost
-
-
 
     Best ROC-AUC: 1.0000
     accuracy score : 0.9884375
@@ -920,24 +795,17 @@ plt.show()
        micro avg       0.99      0.99      0.99     16000
        macro avg       0.94      0.79      0.85     16000
     weighted avg       0.99      0.99      0.99     16000
-    
-
-
-
-
 
     array([[15598,    27],
            [  158,   217]])
 
 
+<img src="output_70_0.png" alt="Service Profile" style="width: 300px;"/>
 
-![png](output_70_0.png)
-
-
-![png](output_71_0.png)
+<img src="output_71_0.png" alt="Service Profile" style="width: 600px;"/>
 
 
-#### 評価
+#### Evaluation
 
 Implementation: Define a Performance Metric
 
@@ -960,16 +828,8 @@ For the performance_metric function in the code cell below, you will need to imp
 の（１）の定義を採用する。
 
 R-squared, coefficient of determination
-$$ 
-1 - \frac{\sum_{n-1}^{i=0} (y_i - \hat{y})^2}{\sum_{n-1}^{i=0} (y_i -\overline{y})^2}
-$$ 
 
-$$ 
-y : Actual Value
-\hat{y} : Predicted Value
-\overline{y} : Average Value
-n : the number of samples
-$$ 
+<img src="2019-03-05-15-01-01.png" alt="Service Profile" style="width: 400px;"/>
 
 ROC-AUC and accuracy score are close to 1.0 for any models benchmarked.
 But R-squred, coefficient of determination is best 0.675 only for XGBoost.
@@ -979,19 +839,17 @@ But R2 score of 0.40 means that 40 percent of the variance in Y is predictable f
 Which is lower than the regular maintenance measure.
 
 
-RainForestよりも良い結果が得られているが、データの前処理を行わないほうが、R2スコアが良い傾向にあることがわかる。
-また、ハイパーパラメータを調整することでさらにR2スコアが改善されることが予測される。
-今回の対象データは、検出したい対象クラスが分布の中心の75パーセンタイルから外れる少数派に含まれるという、データ分布上の特徴があった。
-完全にランダムなデータではなく、測定対象固有の確率分布に従っている可能性がある。
-そのため、正規分布を想定したデータの前処理はモデルの精度を高めることにはつながらず、むしろ分布の少数派のデータは積極的に活用したほうがよいことが推測される。
+Although a better result is obtained than RainForest, it can be seen that the R2 score tends to be better without pre-processing the data.
+It is also predicted that the R2 score is further improved by adjusting the hyper parameter.
+The target data of this time has characteristics on the data distribution that the target class to be detected is included in the minority who deviates from the 75th percentile at the center of the distribution.
+It is not perfectly random data but may be in accordance with the probability distribution peculiar to the measurement object.
+Therefore, it is inferred that preprocessing of data assuming a normal distribution does not lead to an improvement of the accuracy of the model, rather it is better to positively utilize data of minorities in distribution.
 
-これらのことから、当初の60％以上の正確さを期して、データ前処理を行わずに、XGBoostで最適なハイパーパラメータを調整することにする。
+For these reasons, we will adjust the optimal hyperparameter with XGBoost without performing data preprocessing for the initial accuracy of more than 60%.
 
+<img src = "output_76_1.png" alt = "Service Profile" style = "width: 600px;" />
 
-![png](output_76_1.png)
-
-
-Precision,Recallなどみてもデータ前処理を行わないXGBoostが高い性能を発揮していることがわかる。
+It is understood that XGBoost which does not perform data preprocessing also shows high performance even if Precision, Recall etc. are seen.
 
 ##### RandomForest
               precision    recall  f1-score   support
@@ -1024,10 +882,10 @@ Precision,Recallなどみてもデータ前処理を行わないXGBoostが高い
 
 https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.XGBClassifier
 
-訓練データとテストデータについては、上記を踏まえて前処理を施さない、所与のデータを活用する。
+With regard to training data and test data, preprocessing is not carried out based on the above, and given data is utilized.
 
-ハイパーパラメータの決定にあたり、本プロジェクトは以下の探索を行った。
-事前に、いくつかのパラメータを調整し、改善効果の大きかった*max_depth (int)*, *n_estimators (int)*に対象を絞っている。
+In determining the hyperparameter, this project conducted the following search.
+We adjusted several parameters beforehand and focused on * max_depth (int) *, * n_estimators (int) * which improved the effect.
 
 | Parameter | Description | Search Rangge |
 |-|-|-|
@@ -1063,41 +921,36 @@ https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.XGBClass
     Best auroc score: 0.716
 
 
+<img src="output_86_0.png" alt="Service Profile" style="width: 600px;"/>
 
-![png](output_86_0.png)
+<img src="output_87_0.png" alt="Service Profile" style="width: 600px;"/>
 
-
-
-![png](output_87_0.png)
-
-
-
-![png](output_88_1.png)
-
+<img src="output_88_1.png" alt="Service Profile" style="width: 600px;"/>
 
 ## V. Conclusion
 
-XGBoostを採用することで、ベンチマークに用いたRandom Forestよりも高い適合度の分類予測モデルを構築することができた。
-ハイパーパラメータをチューニングすることで、モデルの適合度を上げることができた。
+By adopting XGBoost, we could construct a classification prediction model with higher fitness than Random Forest used for benchmark.
+By tuning the hyper parameter, it was possible to increase the fitness of the model.
 
-![png](output_92_1.png)
-
+<img src="output_92_1.png" alt="Service Profile" style="width: 600px;"/>
 
 ### Reflection
 
-今回は、APSまわりのセンサーから取得したデータを元に、以上発生の有無を予測するモデルを作成した。
-センサーデータの特徴として、大多数のデータは平常時のデータであり、多くの前処理で外れ値に分類されるような分布の中心から離れたデータも予測モデルの構築に重要な役割をはたすことが見てとれた。
-また、そのため、特徴量間で強い相関が見られるものの、PCA等によりクラスタ化して、特徴を表す軸を見出し、特徴量を減らすといった処理をするよりも、そのままの特徴データを活用するほうがよい予測モデルを構築することができた。
+This time, based on the data obtained from sensors around the APS, we created a model that classifies the sensor data to APS failures or others.
+As a characteristic of sensor data, the majority of data are obtained while normal.
+Also data far from the center of the distribution, in most cases, that could be classified as outliers, also plays an important role in building a classification model.
+Although a strong correlation is seen between feature quantities, it is better to utilize the feature data as it is rather than processing such as clustering with PCA or the like, finding the axis representing the feature, and reducing the feature amount I was able to build a model.
 
-このことは、クラス分けに寄与する決定木が導かれたら、PCAで必要となる特徴量の変換と逆変換といったステップを経ずに、重要な特徴量、すなわちセンサーを導けるといった点で利便性が高い。
-トラックなどは、センサーが高価であり、設置に多くの労力とコスト、時間を要することから、XGBoostを活用した今回のアプローチは、車載センサーによる故障予測の分野で汎用的に役立つことが期待される。
+This means that if a decision tree that contributes to classification is derived, it is convenient in terms of introducing important feature quantities, that is, sensors, without going through steps such as transformation and inverse transformation of feature amounts required by PCA high.
+Trucks and the like are expensive sensors and require much labor, cost and time to install, so this approach utilizing XGBoost is expected to be versatile in the field of failure prediction by onboard sensors .
 
-このプロジェクトでは最後に、XGBoostのハイパーパラメータの調整を行った。調整を行うことでモデルの適合度を高めることができた。
-ただし、全パラメータにわたって、調整を行うことは計算資源の制約から今回は見送った。
+We adjusted the hyperparameters of XGBoost in this project.
+By adjusting, we were able to increase the fitness of the model.
+However, we decided not to adjust this parameter over all parameters due to restrictions of computing resources.
 
 ### Improvement
 
-今回のデータ・セットはあらじめ検出対象のクラスの割合が調整されていた可能性がある。
-通常のセンサーデータは、平常時のデータが圧倒的に多く生成される。
-そのため異常時のデータがより少ない、調整前のデータに対しても今回のアプローチが有効であるか追加で検証することが、汎用的に実用化するには必要だと考えられる。
-また、XGBoostはハイパーパラメータの調整に時間がかかるアプローチであり、そのためにGPUの活用など、計算機資源の強化による速度向上が期待できる。
+There is a possibility that the ratio of the class to be detected was adjusted beforehand in the data set of this time.
+In ordinary sensor data, overwhelmingly large amounts of data at normal times are generated.
+Therefore, it is considered necessary to verify whether the approach of this time is effective even for data before adjustment, which has less data at abnormal time, in general purpose for practical use.
+In addition, XGBoost is a time-consuming approach to adjusting hyperparameters, so it can be expected to improve speed by strengthening computing resources such as utilization of GPUs.
